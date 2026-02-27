@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>賃貸単価換算ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #ede9e2;
+    --border: #d8d2c7;
+    --ink: #1e1c18;
+    --ink2: #5a5650;
+    --ink3: #9a9490;
+    --accent: #2d5a3d;
+    --accent2: #4a8c62;
+    --accent-light: #e8f2ec;
+    --red: #8c3a2d;
+    --tag-bg: #1e1c18;
+    --tag-fg: #f5f2ed;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 3rem 1rem 4rem;
+    background-image: 
+      radial-gradient(circle at 90% 10%, rgba(45,90,61,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 10% 90%, rgba(45,90,61,0.04) 0%, transparent 40%);
+  }
+
+  .container {
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1rem;
+  }
+
+  .header-left h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .header-left h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .header-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: var(--tag-bg);
+    color: var(--tag-fg);
+    padding: 0.3rem 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Section */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .section-title .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Area inputs */
+  .area-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .area-cell {
+    background: var(--surface);
+    padding: 1rem 1.2rem;
+    position: relative;
+    transition: background 0.15s;
+  }
+
+  .area-cell:hover { background: #faf9f7; }
+
+  .area-cell.active {
+    background: var(--accent-light);
+  }
+
+  .area-cell.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .area-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .area-label span { color: var(--ink2); }
+
+  .area-input-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .area-input-row input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--ink);
+    outline: none;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  .area-input-row input::-webkit-inner-spin-button,
+  .area-input-row input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .area-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink3);
+  }
+
+  /* Reference bar */
+  .ref-bar {
+    display: flex;
+    gap: 1px;
+    margin-bottom: 1rem;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .ref-item {
+    flex: 1;
+    background: var(--surface2);
+    padding: 0.5rem 0.8rem;
+    text-align: center;
+  }
+
+  .ref-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    display: block;
+  }
+
+  .ref-lbl {
+    font-size: 0.6rem;
+    color: var(--ink3);
+    letter-spacing: 0.1em;
+  }
+
+  /* Rent input */
+  .rent-toggle {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.2rem;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 0.6rem;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--ink3);
+    border: none;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .toggle-btn.active {
+    background: var(--tag-bg);
+    color: var(--tag-fg);
+  }
+
+  .rent-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .rent-field label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .rent-field .input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 1px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .rent-field .input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+
+  .rent-field .input-wrap.readonly {
+    background: var(--accent-light);
+    border-color: transparent;
+  }
+
+  .rent-field input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    color: var(--ink);
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    -moz-appearance: textfield;
+    width: 100%;
+  }
+
+  .rent-field input::-webkit-inner-spin-button,
+  .rent-field input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .rent-field .unit-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink3);
+    padding: 0 0.7rem;
+    white-space: nowrap;
+    border-left: 1px solid var(--border);
+  }
+
+  /* Results */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 1.2rem;
+  }
+
+  .result-cell {
+    background: var(--surface);
+    padding: 1rem 0.8rem;
+    text-align: center;
+  }
+
+  .result-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .result-month {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .result-year {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--ink3);
+    display: block;
+  }
+
+  /* Forex section */
+  .forex-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .currency-tabs {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .currency-tab {
+    padding: 0.4rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--ink3);
+    border: none;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .currency-tab.active {
+    background: var(--tag-bg);
+    color: var(--tag-fg);
+  }
+
+  .rate-info {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--ink3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .rate-pill {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid rgba(45,90,61,0.2);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.65rem;
+  }
+
+  .rate-ok { color: var(--accent); }
+  .rate-err { color: var(--red); }
+
+  .rate-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: end;
+    margin-bottom: 1.2rem;
+  }
+
+  .rate-override-group label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    color: var(--ink3);
+    margin-bottom: 0.3rem;
+  }
+
+  .rate-override-group .input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .rate-override-group input {
+    width: 120px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--ink);
+    padding: 0.5rem 0.7rem;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  .rate-override-group input::-webkit-inner-spin-button,
+  .rate-override-group input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .rate-override-group .unit-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--ink3);
+    padding: 0 0.6rem;
+    border-left: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .no-area-msg {
+    font-size: 0.72rem;
+    color: var(--ink3);
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0;
+    display: none;
+  }
+
+  /* Reset */
+  .reset-btn {
+    display: block;
+    width: 100%;
+    padding: 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink3);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 1rem;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--ink3);
+    letter-spacing: 0.15em;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-left">
+      <h1>賃貸<em>単価</em>換算</h1>
+      <div class="header-sub">Rental Unit Price Calculator</div>
+    </div>
+    <div class="header-tag">Rent</div>
+  </header>
+
+  <!-- Area -->
+  <div class="section">
+    <div class="section-title"><span class="dot"></span>面積</div>
+    <div class="area-grid">
+      <div class="area-cell" id="card-tsubo">
+        <div class="area-label">Tsubo <span>坪</span></div>
+        <div class="area-input-row">
+          <input type="number" id="input-tsubo" placeholder="0" min="0" step="0.01">
+          <span class="area-unit">坪</span>
+        </div>
+      </div>
+      <div class="area-cell" id="card-sqm">
+        <div class="area-label">Sq Meter <span>㎡</span></div>
+        <div class="area-input-row">
+          <input type="number" id="input-sqm" placeholder="0" min="0" step="0.01">
+          <span class="area-unit">m²</span>
+        </div>
+      </div>
+      <div class="area-cell" id="card-sqft">
+        <div class="area-label">Sq Feet <span>ft²</span></div>
+        <div class="area-input-row">
+          <input type="number" id="input-sqft" placeholder="0" min="0" step="0.01">
+          <span class="area-unit">ft²</span>
+        </div>
+      </div>
+      <div class="area-cell" id="card-jo">
+        <div class="area-label">Jo <span>畳（江戸間）</span></div>
+        <div class="area-input-row">
+          <input type="number" id="input-jo" placeholder="0" min="0" step="0.1">
+          <span class="area-unit">畳</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ref bar -->
+  <div class="ref-bar">
+    <div class="ref-item"><span class="ref-val">1坪 = 3.306m²</span><span class="ref-lbl">Tsubo</span></div>
+    <div class="ref-item"><span class="ref-val">1m² = 10.764ft²</span><span class="ref-lbl">Meter</span></div>
+    <div class="ref-item"><span class="ref-val">1畳 = 1.653m²</span><span class="ref-lbl">Jo（江戸間）</span></div>
+  </div>
+
+  <!-- Rent (JPY) -->
+  <div class="section">
+    <div class="section-title"><span class="dot"></span>賃料（円）</div>
+
+    <div class="rent-toggle">
+      <button class="toggle-btn active" id="toggle-month" onclick="setRentMode('month')">月額入力</button>
+      <button class="toggle-btn" id="toggle-year" onclick="setRentMode('year')">年額入力</button>
+    </div>
+
+    <div class="rent-inputs">
+      <div class="rent-field">
+        <label>月額</label>
+        <div class="input-wrap" id="wrap-month">
+          <input type="number" id="rent-month" placeholder="例: 15" min="0">
+          <span class="unit-tag">万円/月</span>
+        </div>
+      </div>
+      <div class="rent-field">
+        <label>年額</label>
+        <div class="input-wrap" id="wrap-year">
+          <input type="number" id="rent-year" placeholder="自動計算" min="0" readonly>
+          <span class="unit-tag">万円/年</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-area-msg" id="jpy-no-area">※ 面積を入力すると単価が表示されます</div>
+
+    <div class="results-grid" id="jpy-results">
+      <div class="result-cell">
+        <span class="result-label">坪単価</span>
+        <span class="result-month" id="jpy-tsubo-m">—</span>
+        <span class="result-year" id="jpy-tsubo-y">—</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">m² 単価</span>
+        <span class="result-month" id="jpy-sqm-m">—</span>
+        <span class="result-year" id="jpy-sqm-y">—</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">ft² 単価</span>
+        <span class="result-month" id="jpy-sqft-m">—</span>
+        <span class="result-year" id="jpy-sqft-y">—</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:1.5rem; justify-content:center; margin-top:0.5rem;">
+      <span style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--accent);">● 月額単価</span>
+      <span style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink3);">● 年額単価</span>
+    </div>
+  </div>
+
+  <!-- Forex -->
+  <div class="section">
+    <div class="section-title"><span class="dot"></span>外貨換算</div>
+
+    <div class="forex-header">
+      <div class="currency-tabs">
+        <button class="currency-tab active" data-cur="USD" onclick="setCurrency('USD')">USD</button>
+        <button class="currency-tab" data-cur="EUR" onclick="setCurrency('EUR')">EUR</button>
+        <button class="currency-tab" data-cur="SGD" onclick="setCurrency('SGD')">SGD</button>
+      </div>
+      <div class="rate-info">
+        <span class="rate-pill" id="fx-rate-pill">— JPY</span>
+        <span id="fx-rate-status">取得中...</span>
+      </div>
+    </div>
+
+    <div class="rate-row">
+      <div class="rate-override-group">
+        <label>レートを手動で上書き（円/<span id="fx-cur-label">USD</span>）</label>
+        <div class="input-wrap">
+          <input type="number" id="fx-override" placeholder="例: 150.5" min="1" step="0.01">
+          <span class="unit-tag" id="fx-unit-tag">円/USD</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rent-toggle">
+      <button class="toggle-btn active" id="fx-toggle-month" onclick="setFxMode('month')">月額入力</button>
+      <button class="toggle-btn" id="fx-toggle-year" onclick="setFxMode('year')">年額入力</button>
+    </div>
+
+    <div class="rent-inputs">
+      <div class="rent-field">
+        <label>月額</label>
+        <div class="input-wrap" id="fx-wrap-month">
+          <input type="number" id="fx-month" placeholder="例: 3000" min="0">
+          <span class="unit-tag" id="fx-month-unit">USD/月</span>
+        </div>
+      </div>
+      <div class="rent-field">
+        <label>年額</label>
+        <div class="input-wrap" id="fx-wrap-year">
+          <input type="number" id="fx-year" placeholder="自動計算" min="0" readonly>
+          <span class="unit-tag" id="fx-year-unit">USD/年</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:0.8rem; font-size:0.7rem; color:var(--ink3); display:flex; gap:0.5rem; align-items:center;">
+      <span>円換算：</span>
+      <span style="font-family:'DM Mono',monospace; font-size:0.8rem;" id="fx-jpy-month">—</span>
+      <span>万円/月 /</span>
+      <span style="font-family:'DM Mono',monospace; font-size:0.8rem;" id="fx-jpy-year">—</span>
+      <span>万円/年</span>
+    </div>
+
+    <div class="no-area-msg" id="fx-no-area">※ 面積を入力すると単価が表示されます</div>
+
+    <div class="results-grid">
+      <div class="result-cell">
+        <span class="result-label">坪単価</span>
+        <span class="result-month" id="fx-tsubo-m">—</span>
+        <span class="result-year" id="fx-tsubo-y">—</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">m² 単価</span>
+        <span class="result-month" id="fx-sqm-m">—</span>
+        <span class="result-year" id="fx-sqm-y">—</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">ft² 単価</span>
+        <span class="result-month" id="fx-sqft-m">—</span>
+        <span class="result-year" id="fx-sqft-y">—</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:1.5rem; justify-content:center; margin-top:0.5rem;">
+      <span style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--accent);">● 月額単価（万円）</span>
+      <span style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink3);">● 年額単価（万円）</span>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ リセット</button>
+
+  <footer>1坪 = 400/121 m² | 1ft² ≈ 0.0929m² | レート：open.er-api.com</footer>
+</div>
+
+<script>
+  const TSUBO = 400 / 121;
+  const SQFT  = 10.76391;
+  const JO    = 400 / 242;
+
+  let areaUpdating = false;
+  let rentMode = 'month'; // 'month' | 'year'
+  let fxMode   = 'month';
+  let activeCur = 'USD';
+  let rates = {}; // { USD: 150.xx, EUR: xx, SGD: xx }
+
+  function r(v, d = 2) {
+    return Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
+  }
+
+  // ── Area ────────────────────────────────────────────
+  function getSqm() {
+    return parseFloat(document.getElementById('input-sqm').value) || null;
+  }
+
+  function convertArea(source, val) {
+    if (areaUpdating) return;
+    areaUpdating = true;
+    const v = parseFloat(val);
+    if (isNaN(v) || val === '') {
+      ['tsubo','sqm','sqft','jo'].forEach(id => {
+        if (id !== source) document.getElementById('input-' + id).value = '';
+      });
+      areaUpdating = false;
+      updateJpy(); updateFx();
+      return;
+    }
+    let sqm;
+    switch(source) {
+      case 'tsubo': sqm = v * TSUBO; break;
+      case 'sqm':   sqm = v; break;
+      case 'sqft':  sqm = v / SQFT; break;
+      case 'jo':    sqm = v * JO; break;
+    }
+    if (source !== 'tsubo') document.getElementById('input-tsubo').value = r(sqm / TSUBO, 4);
+    if (source !== 'sqm')   document.getElementById('input-sqm').value   = r(sqm, 4);
+    if (source !== 'sqft')  document.getElementById('input-sqft').value  = r(sqm * SQFT, 4);
+    if (source !== 'jo')    document.getElementById('input-jo').value    = r(sqm / JO, 2);
+    areaUpdating = false;
+    updateJpy(); updateFx();
+  }
+
+  function setAreaActive(id) {
+    ['tsubo','sqm','sqft','jo'].forEach(c =>
+      document.getElementById('card-' + c).classList.remove('active')
+    );
+    document.getElementById('card-' + id).classList.add('active');
+  }
+
+  // ── Rent toggle ──────────────────────────────────────
+  function setRentMode(mode) {
+    rentMode = mode;
+    const mWrap = document.getElementById('wrap-month');
+    const yWrap = document.getElementById('wrap-year');
+    const mInput = document.getElementById('rent-month');
+    const yInput = document.getElementById('rent-year');
+
+    if (mode === 'month') {
+      mInput.readOnly = false; mInput.placeholder = '例: 15';
+      yInput.readOnly = true;  yInput.placeholder = '自動計算';
+      mWrap.classList.remove('readonly'); yWrap.classList.add('readonly');
+      yInput.value = '';
+    } else {
+      yInput.readOnly = false; yInput.placeholder = '例: 180';
+      mInput.readOnly = true;  mInput.placeholder = '自動計算';
+      yWrap.classList.remove('readonly'); mWrap.classList.add('readonly');
+      mInput.value = '';
+    }
+    document.getElementById('toggle-month').classList.toggle('active', mode === 'month');
+    document.getElementById('toggle-year').classList.toggle('active', mode === 'year');
+    updateJpy();
+  }
+
+  function updateJpy() {
+    const sqm = getSqm();
+    let monthly = null, yearly = null;
+
+    if (rentMode === 'month') {
+      const v = parseFloat(document.getElementById('rent-month').value);
+      if (!isNaN(v) && v > 0) {
+        monthly = v;
+        yearly  = r(v * 12, 2);
+        document.getElementById('rent-year').value = yearly;
+      } else {
+        document.getElementById('rent-year').value = '';
+      }
+    } else {
+      const v = parseFloat(document.getElementById('rent-year').value);
+      if (!isNaN(v) && v > 0) {
+        yearly  = v;
+        monthly = r(v / 12, 2);
+        document.getElementById('rent-month').value = monthly;
+      } else {
+        document.getElementById('rent-month').value = '';
+      }
+    }
+
+    const noArea = document.getElementById('jpy-no-area');
+    const ids = ['tsubo','sqm','sqft'];
+
+    if (!monthly && !yearly) {
+      noArea.style.display = 'none';
+      ids.forEach(id => {
+        document.getElementById('jpy-' + id + '-m').textContent = '—';
+        document.getElementById('jpy-' + id + '-y').textContent = '—';
+      });
+      return;
+    }
+    if (!sqm || sqm <= 0) {
+      noArea.style.display = 'block';
+      ids.forEach(id => {
+        document.getElementById('jpy-' + id + '-m').textContent = '—';
+        document.getElementById('jpy-' + id + '-y').textContent = '—';
+      });
+      return;
+    }
+    noArea.style.display = 'none';
+
+    const pmSqm = monthly / sqm;
+    const pySqm = yearly  / sqm;
+    const fmt = (v, suffix) => v != null ? r(v, 2).toLocaleString() + suffix : '—';
+
+    document.getElementById('jpy-tsubo-m').textContent = fmt(pmSqm * TSUBO, ' 万円/月');
+    document.getElementById('jpy-tsubo-y').textContent = fmt(pySqm * TSUBO, ' 万円/年');
+    document.getElementById('jpy-sqm-m').textContent   = fmt(pmSqm,         ' 万円/月');
+    document.getElementById('jpy-sqm-y').textContent   = fmt(pySqm,         ' 万円/年');
+    document.getElementById('jpy-sqft-m').textContent  = fmt(pmSqm / SQFT,  ' 万円/月');
+    document.getElementById('jpy-sqft-y').textContent  = fmt(pySqm / SQFT,  ' 万円/年');
+  }
+
+  // ── Forex ────────────────────────────────────────────
+  const CUR_LABELS = { USD: 'USD', EUR: 'EUR', SGD: 'SGD' };
+
+  function setCurrency(cur) {
+    activeCur = cur;
+    document.querySelectorAll('.currency-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.cur === cur)
+    );
+    document.getElementById('fx-cur-label').textContent = cur;
+    document.getElementById('fx-unit-tag').textContent = '円/' + cur;
+    document.getElementById('fx-month-unit').textContent = cur + '/月';
+    document.getElementById('fx-year-unit').textContent  = cur + '/年';
+    document.getElementById('fx-override').value = '';
+
+    const rate = rates[cur];
+    updateRatePill(cur, rate);
+    updateFx();
+  }
+
+  function updateRatePill(cur, rate) {
+    const pill   = document.getElementById('fx-rate-pill');
+    const status = document.getElementById('fx-rate-status');
+    if (rate) {
+      pill.textContent = r(rate, 2) + ' 円/' + cur;
+      status.textContent = 'リアルタイム取得済';
+      status.className = 'rate-ok';
+    } else {
+      pill.textContent = '— 円/' + cur;
+      status.textContent = '取得失敗 — 手動入力してください';
+      status.className = 'rate-err';
+    }
+  }
+
+  function getEffectiveRate() {
+    const ov = parseFloat(document.getElementById('fx-override').value);
+    if (!isNaN(ov) && ov > 0) return ov;
+    return rates[activeCur] || null;
+  }
+
+  function setFxMode(mode) {
+    fxMode = mode;
+    const mWrap  = document.getElementById('fx-wrap-month');
+    const yWrap  = document.getElementById('fx-wrap-year');
+    const mInput = document.getElementById('fx-month');
+    const yInput = document.getElementById('fx-year');
+
+    if (mode === 'month') {
+      mInput.readOnly = false; mInput.placeholder = '例: 3000';
+      yInput.readOnly = true;  yInput.placeholder = '自動計算';
+      mWrap.classList.remove('readonly'); yWrap.classList.add('readonly');
+      yInput.value = '';
+    } else {
+      yInput.readOnly = false; yInput.placeholder = '例: 36000';
+      mInput.readOnly = true;  mInput.placeholder = '自動計算';
+      yWrap.classList.remove('readonly'); mWrap.classList.add('readonly');
+      mInput.value = '';
+    }
+    document.getElementById('fx-toggle-month').classList.toggle('active', mode === 'month');
+    document.getElementById('fx-toggle-year').classList.toggle('active',  mode === 'year');
+    updateFx();
+  }
+
+  function updateFx() {
+    const rate = getEffectiveRate();
+    const sqm  = getSqm();
+
+    // Update override pill
+    const ov = parseFloat(document.getElementById('fx-override').value);
+    if (!isNaN(ov) && ov > 0) {
+      document.getElementById('fx-rate-pill').textContent = r(ov,2) + ' 円/' + activeCur + ' (手動)';
+    } else if (rates[activeCur]) {
+      document.getElementById('fx-rate-pill').textContent = r(rates[activeCur],2) + ' 円/' + activeCur;
+    }
+
+    let fxMonthly = null, fxYearly = null;
+    if (fxMode === 'month') {
+      const v = parseFloat(document.getElementById('fx-month').value);
+      if (!isNaN(v) && v > 0) {
+        fxMonthly = v;
+        fxYearly  = r(v * 12, 2);
+        document.getElementById('fx-year').value = fxYearly;
+      } else {
+        document.getElementById('fx-year').value = '';
+      }
+    } else {
+      const v = parseFloat(document.getElementById('fx-year').value);
+      if (!isNaN(v) && v > 0) {
+        fxYearly  = v;
+        fxMonthly = r(v / 12, 2);
+        document.getElementById('fx-month').value = fxMonthly;
+      } else {
+        document.getElementById('fx-month').value = '';
+      }
+    }
+
+    // JPY conversion display
+    const jpyMonthEl = document.getElementById('fx-jpy-month');
+    const jpyYearEl  = document.getElementById('fx-jpy-year');
+    if (rate && fxMonthly) {
+      const jm = r((fxMonthly * rate) / 10000, 2);
+      const jy = r((fxYearly  * rate) / 10000, 2);
+      jpyMonthEl.textContent = jm.toLocaleString();
+      jpyYearEl.textContent  = jy.toLocaleString();
+    } else {
+      jpyMonthEl.textContent = '—';
+      jpyYearEl.textContent  = '—';
+    }
+
+    const noArea = document.getElementById('fx-no-area');
+    const ids = ['tsubo','sqm','sqft'];
+    const clear = () => ids.forEach(id => {
+      document.getElementById('fx-' + id + '-m').textContent = '—';
+      document.getElementById('fx-' + id + '-y').textContent = '—';
+    });
+
+    if (!fxMonthly && !fxYearly) { noArea.style.display = 'none'; clear(); return; }
+    if (!rate)                    { noArea.style.display = 'none'; clear(); return; }
+    if (!sqm || sqm <= 0)         { noArea.style.display = 'block'; clear(); return; }
+    noArea.style.display = 'none';
+
+    // Convert to 万円 then divide by area
+    const manEnMonth = (fxMonthly * rate) / 10000;
+    const manEnYear  = (fxYearly  * rate) / 10000;
+    const pmSqm = manEnMonth / sqm;
+    const pySqm = manEnYear  / sqm;
+    const fmt = (v, s) => r(v,2).toLocaleString() + s;
+
+    document.getElementById('fx-tsubo-m').textContent = fmt(pmSqm * TSUBO, ' 万円/月');
+    document.getElementById('fx-tsubo-y').textContent = fmt(pySqm * TSUBO, ' 万円/年');
+    document.getElementById('fx-sqm-m').textContent   = fmt(pmSqm,         ' 万円/月');
+    document.getElementById('fx-sqm-y').textContent   = fmt(pySqm,         ' 万円/年');
+    document.getElementById('fx-sqft-m').textContent  = fmt(pmSqm / SQFT,  ' 万円/月');
+    document.getElementById('fx-sqft-y').textContent  = fmt(pySqm / SQFT,  ' 万円/年');
+  }
+
+  // ── Rate fetch ───────────────────────────────────────
+  async function fetchRates() {
+    const status = document.getElementById('fx-rate-status');
+    try {
+      const res  = await fetch('https://open.er-api.com/v6/latest/JPY');
+      const data = await res.json();
+      if (data && data.rates) {
+        // API returns JPY base, so rates[USD] = how many USD per 1 JPY → invert
+        ['USD','EUR','SGD'].forEach(cur => {
+          if (data.rates[cur]) rates[cur] = r(1 / data.rates[cur], 4);
+        });
+        updateRatePill(activeCur, rates[activeCur]);
+        // Also update placeholder
+        if (rates[activeCur]) {
+          document.getElementById('fx-override').placeholder = r(rates[activeCur], 2);
+        }
+      } else throw new Error();
+    } catch(e) {
+      status.textContent = '取得失敗 — 手動入力してください';
+      status.className = 'rate-err';
+    }
+    updateFx();
+  }
+
+  // ── Reset ────────────────────────────────────────────
+  function resetAll() {
+    ['tsubo','sqm','sqft','jo'].forEach(id => {
+      document.getElementById('input-' + id).value = '';
+      document.getElementById('card-' + id).classList.remove('active');
+    });
+    document.getElementById('rent-month').value = '';
+    document.getElementById('rent-year').value  = '';
+    document.getElementById('fx-month').value   = '';
+    document.getElementById('fx-year').value    = '';
+    document.getElementById('fx-override').value = '';
+    setRentMode('month');
+    setFxMode('month');
+    updateJpy();
+    updateFx();
+  }
+
+  // ── Bind events ──────────────────────────────────────
+  ['tsubo','sqm','sqft','jo'].forEach(id => {
+    const el = document.getElementById('input-' + id);
+    el.addEventListener('input', e => { setAreaActive(id); convertArea(id, e.target.value); });
+    el.addEventListener('focus', () => setAreaActive(id));
+  });
+
+  document.getElementById('rent-month').addEventListener('input', updateJpy);
+  document.getElementById('rent-year').addEventListener('input', updateJpy);
+  document.getElementById('fx-month').addEventListener('input', updateFx);
+  document.getElementById('fx-year').addEventListener('input', updateFx);
+  document.getElementById('fx-override').addEventListener('input', updateFx);
+
+  // Init
+  setRentMode('month');
+  setFxMode('month');
+  fetchRates();
+</script>
+</body>
+</html>
